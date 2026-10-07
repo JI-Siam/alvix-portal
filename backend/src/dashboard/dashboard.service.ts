@@ -6,17 +6,24 @@ export class DashboardService {
   constructor(private ds: DataSource) {}
 
   async stats() {
-    const n = async (sql: string) => Number((await this.ds.query(sql))[0].n);
-    const [applicants, applications, universities, programs, majors, areas, pendingDocuments, intakes] = await Promise.all([
-      n(`SELECT count(*) n FROM applicants`),
-      n(`SELECT count(*) n FROM applications`),
-      n(`SELECT count(*) n FROM universities WHERE is_active`),
-      n(`SELECT count(*) n FROM programs WHERE is_active`),
-      n(`SELECT count(*) n FROM majors WHERE is_active`),
-      n(`SELECT count(*) n FROM areas WHERE is_active`),
-      n(`SELECT count(*) n FROM documents WHERE status = 'PENDING'`),
-      n(`SELECT count(*) n FROM intakes WHERE is_active`),
-    ]);
+    // Combine all counts into a single query to avoid exhausting the DB connection pool
+    const [totalsRaw] = await this.ds.query(`
+      SELECT 
+        (SELECT count(*)::int FROM applicants) AS applicants,
+        (SELECT count(*)::int FROM applications) AS applications,
+        (SELECT count(*)::int FROM universities WHERE is_active) AS universities,
+        (SELECT count(*)::int FROM programs WHERE is_active) AS programs,
+        (SELECT count(*)::int FROM majors WHERE is_active) AS majors,
+        (SELECT count(*)::int FROM areas WHERE is_active) AS areas,
+        (SELECT count(*)::int FROM documents WHERE status = 'PENDING') AS "pendingDocuments",
+        (SELECT count(*)::int FROM intakes WHERE is_active) AS intakes
+    `);
+    const totals = {
+      applicants: totalsRaw.applicants, applications: totalsRaw.applications,
+      universities: totalsRaw.universities, programs: totalsRaw.programs,
+      majors: totalsRaw.majors, areas: totalsRaw.areas,
+      pendingDocuments: totalsRaw.pendingDocuments, intakes: totalsRaw.intakes,
+    };
     const [applicationsByStatus, documentsByStatus, recentApplications, passportsExpiring, bankMaturing] = await Promise.all([
       this.ds.query(`SELECT status, count(*)::int AS count FROM applications GROUP BY status`),
       this.ds.query(`SELECT status, count(*)::int AS count FROM documents GROUP BY status`),
@@ -34,7 +41,7 @@ export class DashboardService {
         ORDER BY bank_maturity LIMIT 8`),
     ]);
     return {
-      totals: { applicants, applications, universities, programs, majors, areas, pendingDocuments, intakes },
+      totals,
       applicationsByStatus, documentsByStatus, recentApplications, passportsExpiring, bankMaturing,
     };
   }

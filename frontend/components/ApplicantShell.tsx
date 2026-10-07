@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { RiKeyLine, RiLogoutBoxRLine, RiGraduationCapLine } from 'react-icons/ri';
+import { RiKeyLine, RiLogoutBoxRLine, RiGraduationCapLine, RiMenuLine } from 'react-icons/ri';
 import { api, post } from '@/lib/api';
 import { Me, SessionProvider } from '@/lib/session';
 import PasswordModal from './PasswordModal';
@@ -10,6 +10,7 @@ export default function ApplicantShell({ children }: { children: React.ReactNode
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [pw, setPw] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     api('/auth/me')
@@ -35,8 +36,34 @@ export default function ApplicantShell({ children }: { children: React.ReactNode
 
   return (
     <SessionProvider me={me}>
-      <nav>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Mobile topbar */}
+      <div style={{
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 20px',
+        background: 'linear-gradient(135deg, #0e1630, #14213d)',
+        color: '#fff',
+      }} className="mobile-topbar">
+        <button className="icon" style={{ color: '#fff' }} onClick={() => setMobileOpen(true)}>
+          <RiMenuLine size={20} />
+        </button>
+        <span style={{ fontWeight: 700, fontSize: 15 }}>Applicant Portal</span>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 40,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+          }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Navigation Menu */}
+      <nav className={mobileOpen ? 'open' : ''}>
+        <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src="/logo.jpg"
             alt="Alvix logo"
@@ -49,7 +76,7 @@ export default function ApplicantShell({ children }: { children: React.ReactNode
         <span className="sp" />
         <a
           href="#"
-          onClick={(e) => { e.preventDefault(); setPw(true); }}
+          onClick={(e) => { e.preventDefault(); setPw(true); setMobileOpen(false); }}
           style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13.5 }}
         >
           <RiKeyLine size={15} /> Change password

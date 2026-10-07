@@ -148,7 +148,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
         {/* Mobile sidebar */}
         {mobileOpen && (
-          <div style={{
+          <div className="mobile-sidebar" style={{
             position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
             width: 240,
           }}>
@@ -159,7 +159,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <main>
           {/* Mobile topbar */}
           <div style={{
-            display: 'none',
             alignItems: 'center',
             gap: 12,
             padding: '12px 0 20px',
