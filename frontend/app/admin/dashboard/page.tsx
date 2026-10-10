@@ -14,6 +14,7 @@ import {
   RiBankLine,
   RiArrowRightLine,
   RiTimeLine,
+  RiAddLine,
 } from 'react-icons/ri';
 import { Badge, PageHead } from '@/components/ui';
 import { api, DOC_STATUSES, label, STATUSES } from '@/lib/api';
@@ -146,6 +147,35 @@ export default function Dashboard() {
         sub={`Welcome back — ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}
       />
 
+      {/* Quick Actions */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
+        {[
+          { label: 'Add Applicant', href: '/admin/applicants?create=true', color: '#3b82f6' },
+          { label: 'Create Application', href: '/admin/applications?create=true', color: '#10b981' },
+          { label: 'Add University', href: '/admin/universities?create=true', color: '#f59e0b' },
+          { label: 'Add Program', href: '/admin/programs?create=true', color: '#8b5cf6' },
+        ].map((action, idx) => (
+          <Link
+            key={idx}
+            href={action.href}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 8,
+              background: '#fff', border: `1px solid #e2e8f0`,
+              color: '#1e293b', fontWeight: 600, fontSize: 13,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.borderColor = action.color)}
+            onMouseOut={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
+          >
+            <RiAddLine size={16} color={action.color} />
+            {action.label}
+          </Link>
+        ))}
+      </div>
+
       {/* Stats grid */}
       <div className="stats">
         {tiles.map(([t, n, href]) => {
@@ -173,8 +203,117 @@ export default function Dashboard() {
         })}
       </div>
 
+      {/* Secondary Stats */}
+      <div className="stats" style={{ marginTop: 24, gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <div className="stat" style={{ padding: 16 }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>Applicants This Month</span>
+          <div style={{ fontSize: 24, fontWeight: 700, margin: '4px 0' }}>{s.applicantsOverTime?.thisMonth ?? 0}</div>
+          <span style={{ fontSize: 12, color: (s.applicantsOverTime?.thisMonth >= s.applicantsOverTime?.lastMonth) ? '#10b981' : '#ef4444' }}>
+            vs {s.applicantsOverTime?.lastMonth ?? 0} last month
+          </span>
+        </div>
+        <div className="stat" style={{ padding: 16 }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>Application Success Rate</span>
+          <div style={{ fontSize: 24, fontWeight: 700, margin: '4px 0' }}>
+            {s.applicationSuccess?.decided ? Math.round((s.applicationSuccess.approved / s.applicationSuccess.decided) * 100) : 0}%
+          </div>
+          <span style={{ fontSize: 12, color: '#64748b' }}>of decided applications</span>
+        </div>
+        <div className="stat" style={{ padding: 16 }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>Document Completion</span>
+          <div style={{ fontSize: 24, fontWeight: 700, margin: '4px 0' }}>{s.documentCompletion?.applicantsWithCompletedDocs ?? 0}</div>
+          <span style={{ fontSize: 12, color: '#64748b' }}>vs {s.documentCompletion?.applicantsWithPendingDocs ?? 0} with pending</span>
+        </div>
+        <div className="stat" style={{ padding: 16 }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>Data Quality Warnings</span>
+          <div style={{ fontSize: 24, fontWeight: 700, margin: '4px 0', color: '#ef4444' }}>
+            {s.incompleteApplicants?.length ?? 0}
+          </div>
+          <span style={{ fontSize: 12, color: '#64748b' }}>incomplete profiles found</span>
+        </div>
+      </div>
+
+      <div className="two" style={{ marginTop: 24 }}>
+        <div className="card">
+          <div className="card-head">
+            <h3 style={{ margin: 0 }}>Applications Needing Action</h3>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Application ID</th>
+                  <th>Applicant</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(s.applicationsNeedingAction || []).map((a: any) => (
+                  <tr key={a.id}>
+                    <td><span style={{ fontWeight: 600, fontSize: 13 }}>{a.applicationId}</span></td>
+                    <td><Link href={`/admin/applicants/${a.applicantId}`}>{a.firstName} {a.lastName}</Link></td>
+                    <td><Badge value={a.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-head">
+            <h3 style={{ margin: 0 }}>Incomplete Profiles</h3>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Applicant</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(s.incompleteApplicants || []).map((a: any) => (
+                  <tr key={a.id}>
+                    <td><Link href={`/admin/applicants/${a.id}`} style={{ fontWeight: 600 }}>{a.firstName} {a.lastName}</Link></td>
+                    <td><span style={{ color: '#ef4444', fontSize: 12, background: '#fee2e2', padding: '2px 8px', borderRadius: 99 }}>Missing Info</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="two" style={{ marginTop: 24 }}>
+        <div className="card">
+          <div className="card-head"><h3 style={{ margin: 0 }}>Top Universities</h3></div>
+          <div className="table-wrap">
+            <table>
+              <tbody>
+                {(s.topUniversities || []).map((u: any) => (
+                  <tr key={u.name}><td>{u.name}</td><td className="r"><b>{u.count}</b></td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-head"><h3 style={{ margin: 0 }}>Popular Programs</h3></div>
+          <div className="table-wrap">
+            <table>
+              <tbody>
+                {(s.topPrograms || []).map((p: any) => (
+                  <tr key={p.name}><td>{p.name}</td><td className="r"><b>{p.count}</b></td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Status charts */}
-      <div className="two">
+      <div className="two" style={{ marginTop: 24 }}>
         {/* Applications by status */}
         <div className="card">
           <div className="card-head">
@@ -242,7 +381,7 @@ export default function Dashboard() {
       </div>
 
       {/* Alert cards */}
-      <div className="two">
+      <div className="two" style={{ marginTop: 24 }}>
         <div className="card">
           <div className="card-head">
             <div style={{
@@ -297,7 +436,7 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Applications */}
-      <div className="card">
+      <div className="card" style={{ marginTop: 24 }}>
         <div className="card-head">
           <div style={{
             width: 34, height: 34, borderRadius: 8,

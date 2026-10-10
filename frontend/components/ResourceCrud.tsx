@@ -48,6 +48,16 @@ export default function ResourceCrud(props: {
     return () => clearTimeout(t);
   }, [load, q]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('create') === 'true') {
+        open('create');
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, []);
+
   const open = (mode: 'create' | 'edit', row?: any) => {
     setErr('');
     setModal({ mode, row });
