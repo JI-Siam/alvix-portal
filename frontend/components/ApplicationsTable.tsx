@@ -78,7 +78,7 @@ export default function ApplicationsTable({
               </td>
               {!hideApplicant && (
                 <td>
-                  <Link className='font-bold text-red-500' href={`/admin/applicants/${r.applicantId}`}>
+                  <Link href={`/admin/applicants/${r.applicantId}`} style={{ fontWeight: 600 }}>
                     {r.applicant?.firstName} {r.applicant?.lastName}
                   </Link>
                 </td>
